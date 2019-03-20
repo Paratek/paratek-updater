@@ -1,6 +1,10 @@
 package io.paratek.rs.deob.impl;
 
 import io.paratek.rs.deob.Transformer;
+import io.paratek.rs.util.BytecodeUtils;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.commons.RemappingClassAdapter;
 import jdk.internal.org.objectweb.asm.commons.SimpleRemapper;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
@@ -24,10 +28,17 @@ public class RenameUnique extends Transformer {
 
         final SimpleRemapper simpleClassRemapper = new SimpleRemapper(classNameMappings);
         for (ClassNode classNode : classMap.values()) {
-            ClassNode copy = new ClassNode();
+            ClassReader classReader = new ClassReader(BytecodeUtils.getClassNodeBytes(classNode));
+            ClassWriter classWriter = new ClassWriter(classReader, 0);
+            RemappingClassAdapter remappingClassAdapter = new RemappingClassAdapter(classWriter, simpleClassRemapper);
+            classReader.accept(remappingClassAdapter, ClassReader.EXPAND_FRAMES);
+            classReader = new ClassReader(classWriter.toByteArray());
+            ClassNode newNode = new ClassNode();
+            classReader.accept(newNode, 0);
 
+            classMap.remove(classNode.name);
+            classMap.put(newNode.name, newNode);
         }
-
     }
 
     private class NameGenerator {
@@ -35,15 +46,15 @@ public class RenameUnique extends Transformer {
         private int count = 0;
         private final String base;
 
-        public NameGenerator(String base) {
+        NameGenerator(String base) {
             this.base = base;
         }
 
-        public String next() {
+        String next() {
             return base + count++;
         }
 
-        public void reset() {
+        void reset() {
             this.count = 0;
         }
 
