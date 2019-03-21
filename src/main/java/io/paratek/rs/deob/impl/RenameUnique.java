@@ -1,6 +1,7 @@
 package io.paratek.rs.deob.impl;
 
 import io.paratek.rs.deob.Transformer;
+import io.paratek.rs.deob.annotations.Metadata;
 import io.paratek.rs.util.BytecodeUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -11,18 +12,17 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.Predicate;
 
 public class RenameUnique extends Transformer {
 
     private final List<String> whiteList = Collections.singletonList("main");
+    private final Map<String, Class<?>> unknownClasses = new HashMap<>();
 
     @Override
     public void run(Map<String, ClassNode> classMap) {
         // Create our mappings
-        final List<MethodNode> methodNodes = new ArrayList<>();
-
         final NameGenerator classNameGenerator = new NameGenerator("class");
         final NameGenerator methodNameGenerator = new NameGenerator("method");
         final NameGenerator fieldNameGenerator = new NameGenerator("field");
@@ -37,7 +37,7 @@ public class RenameUnique extends Transformer {
             } else {
                 classNameMappings.put(classNode.name, classNameGenerator.next());
             }
-            //Fields
+            // Fields
             for (FieldNode fieldNode : (List<FieldNode>) classNode.fields) {
                 final Stack<ClassNode> classNodeStack = new Stack<>();
                 classNodeStack.push(classNode);
@@ -51,7 +51,16 @@ public class RenameUnique extends Transformer {
                     }
                 }
             }
-            methodNodes.addAll(classNode.methods);
+            // Methods
+            for (MethodNode methodNode : (List<MethodNode>) classNode.methods) {
+                if (this.whiteList.contains(methodNode.name) || methodNode.name.contains("<")
+                        || (methodNode.access & Opcodes.ACC_NATIVE) != 0
+                        || !this.isLocalMethod(classMap, classNode, methodNode.name, methodNode.desc)) {
+                    continue;
+                }
+                // Check if method is overridden / gotten from interface or super class
+
+            }
         }
 
         // Do all of our modifications
@@ -63,7 +72,7 @@ public class RenameUnique extends Transformer {
 
         this.applyMappings(classMap, simpleFieldRemapper);
         this.applyMappings(classMap, simpleMethodRemapper);
-        this.applyMappings(classMap, simpleClassRemapper);
+//        this.applyMappings(classMap, simpleClassRemapper);
 
 //        for (Map.Entry<String, ClassNode> pair : classMap.entrySet()) {
 //            System.out.println(pair.getKey() + " -> " + pair.getValue().name);
@@ -73,6 +82,94 @@ public class RenameUnique extends Transformer {
 //        for (Map.Entry<String, ClassNode> item : modifiedNodeMap.entrySet()) {
 //            classMap.put(item.getKey(), item.getValue());
 //        }
+    }
+
+
+    /**
+     * Check if a method name belongs to a class with reflection
+     * @param clazz
+     * @param methodName
+     * @return
+     */
+    private boolean checkClass(final Class<?> clazz, final String methodName) {
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.getName().equals(methodName.replace("/", "."))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Uses reflection to lookup a class name
+     * @param name
+     * @return
+     */
+    private Class<?> findClass(final String name) {
+        try {
+            return this.getClass().getClassLoader().loadClass(name.replace("/", "."));
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    /**
+     * Checks if a Method belongs to the code that's being deobfuscated and is not a native class
+     * @param classMap
+     * @param classNode
+     * @param methodName
+     * @param methodDesc
+     * @return
+     */
+    private boolean isLocalMethod(final Map<String, ClassNode> classMap, final ClassNode classNode, final String methodName, final String methodDesc) {
+        final Stack<ClassNode> stack = new Stack<>();
+        stack.push(classNode);
+        while (stack.size() > 0) {
+            final ClassNode curr = stack.pop();
+            final ClassNode superNode = this.getFromName(classMap, curr.superName);
+            if (superNode != null) {
+                stack.push(superNode);
+            } else {
+                if (this.unknownClasses.containsKey(curr.superName)) {
+                    if (this.checkClass(this.unknownClasses.get(curr.superName), methodName)) {
+                        return false;
+                    }
+                } else {
+                    final Class<?> clazz = this.findClass(curr.superName);
+                    if (clazz != null && this.checkClass(clazz, methodName)) {
+                        return false;
+                    }
+                }
+            }
+            for (String itf : (List<String>) curr.interfaces) {
+                final ClassNode itfNode = this.getFromName(classMap, itf);
+                if (itfNode != null) {
+                    stack.push(itfNode);
+                } else {
+                    if (this.unknownClasses.containsKey(itf)) {
+                        if (this.checkClass(this.unknownClasses.get(itf), methodName)) {
+                            return false;
+                        }
+                    } else {
+                        final Class<?> clazz = this.findClass(itf);
+                        if (clazz != null && this.checkClass(clazz, methodName)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private ClassNode getFromName(final Map<String, ClassNode> classMap, final String name) {
+        if (classMap.containsKey(name)) {
+            return classMap.get(name);
+        }
+        return null;
     }
 
     private void applyMappings(final Map<String, ClassNode> classMap, final SimpleRemapper remapper) {

@@ -4,4 +4,6 @@ public @interface Metadata {
 
     String originalName();
 
+    String originalDescription() default "[unassigned]";
+
 }
