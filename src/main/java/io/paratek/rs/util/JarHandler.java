@@ -117,32 +117,52 @@ public class JarHandler {
      * @throws IOException
      */
     private void readJarEntries(Map<String, String> params, JarInputStream inputStream) throws IOException {
+        boolean isDecrypting = false;
         JarEntry entry;
         while ((entry = inputStream.getNextJarEntry()) != null) {
             if (this.game.equals(Game.OSRS)) {
-                if (entry.getName().endsWith(".class")) {
-                    final ClassReader reader = new ClassReader(inputStream);
-                    final ClassNode classNode = new ClassNode();
-                    reader.accept(classNode, 0);
-                    this.getClassMap().put(entry.getName()
-                            .replace(".class", "")
-                            .replace("/", "."), classNode);
-                }
+                readEntryStream(inputStream, entry);
             } else if (this.game.equals(Game.RS3)) {
-                if (entry.getName().equals("inner.pack.gz")) {
-                    for(Map.Entry<String, byte[]> innerEntry : InnerPackDecrypter.decryptPack(inputStream, params.get("0"), params.get("-1")).entrySet()) {
-                        final ClassReader reader = new ClassReader(innerEntry.getValue());
-                        final ClassNode classNode = new ClassNode();
-                        reader.accept(classNode, 0);
-                        this.getClassMap().put(innerEntry.getKey()
-                                .replace(".class", "")
-                                .replace("/", "."), classNode);
+                if (entry.getName().contains("META-INF")) {
+                    isDecrypting = true;
+                    continue;
+                }
+                if (isDecrypting) {
+                    if (entry.getName().equals("inner.pack.gz")) {
+                        for (Map.Entry<String, byte[]> innerEntry : InnerPackDecrypter.decryptPack(inputStream, params.get("0"), params.get("-1")).entrySet()) {
+                            final ClassReader reader = new ClassReader(innerEntry.getValue());
+                            final ClassNode classNode = new ClassNode();
+                            reader.accept(classNode, 0);
+                            this.getClassMap().put(innerEntry.getKey()
+                                    .replace(".class", "")
+                                    .replace("/", "."), classNode);
+                        }
                     }
+                } else {
+                    readEntryStream(inputStream, entry);
                 }
             }
             inputStream.closeEntry();
         }
         inputStream.close();
+    }
+
+
+    /**
+     * Reads JarEntry from JarInputStream
+     * @param inputStream
+     * @param entry
+     * @throws IOException
+     */
+    private void readEntryStream(JarInputStream inputStream, JarEntry entry) throws IOException {
+        if (entry.getName().endsWith(".class")) {
+            final ClassReader reader = new ClassReader(inputStream);
+            final ClassNode classNode = new ClassNode();
+            reader.accept(classNode, 0);
+            this.getClassMap().put(entry.getName()
+                    .replace(".class", "")
+                    .replace("/", "."), classNode);
+        }
     }
 
 

@@ -35,7 +35,6 @@ public class ClassNodeLoader extends ClassLoader {
         if (this.classes.containsKey(name)) {
             return this.nodeToClass(this.classes.get(name));
         }
-        System.out.println(name);
         return super.loadClass(name);
     }
 

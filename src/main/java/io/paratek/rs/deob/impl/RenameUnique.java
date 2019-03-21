@@ -14,12 +14,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class RenameUnique extends Transformer {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
-    private final List<String> whiteList = Collections.singletonList("main");
+    private final List<String> whiteList = Arrays.asList("main",
+            "supplyApplet", "init", "stop", "start", "update", "paint", "destroy");
     private final Map<String, Class<?>> unknownClasses = new HashMap<>();
 
     @Override
@@ -32,6 +34,8 @@ public class RenameUnique extends Transformer {
         final Map<String, String> classNameMappings = new HashMap<>();
         final Map<String, String> fieldNameMappings = new HashMap<>();
         final Map<String, String> methodNameMappings = new HashMap<>();
+
+        final List<MethodNode> methodNodes = new ArrayList<>();
         logger.atInfo().log("Generating unique name mappings");
         for (ClassNode classNode : classMap.values()) {
             // Classes
@@ -40,11 +44,12 @@ public class RenameUnique extends Transformer {
             }
             // Fields
             for (FieldNode fieldNode : (List<FieldNode>) classNode.fields) {
+                String name = fieldNameGenerator.next();
                 final Stack<ClassNode> classNodeStack = new Stack<>();
                 classNodeStack.push(classNode);
                 while (classNodeStack.size() > 0) {
                     ClassNode owner = classNodeStack.pop();
-                    fieldNameMappings.put(owner.name + "." + fieldNode.name, fieldNameGenerator.next());
+                    fieldNameMappings.put(owner.name + "." + fieldNode.name, name);
                     for (ClassNode supercn : classMap.values()) {
                         if (supercn.superName.equals(owner.name)) {
                             classNodeStack.push(supercn);
@@ -53,29 +58,44 @@ public class RenameUnique extends Transformer {
                 }
             }
             // Methods
-            for (MethodNode methodNode : (List<MethodNode>) classNode.methods) {
-                if (this.notLocal(classMap, classNode, methodNode)) {
-                    continue;
+            methodNodes.addAll((List<MethodNode>) classNode.methods);
+        }
+
+        methods:
+        for (MethodNode m : methodNodes) {
+            ClassNode owner = this.getOwner(classMap, m);
+            if (this.notLocal(classMap, owner, m)) {
+                continue;
+            }
+
+            Stack<ClassNode> stack = new Stack<>();
+            stack.push(owner);
+            while (stack.size() > 0) {
+                ClassNode node = stack.pop();
+                if (node != owner && this.getMethod(node, m.name, m.desc) != null) {
+                    continue methods;
                 }
-                final String newName = methodNameGenerator.next();
-                // Check if method is overridden / gotten from interface or super class
-                final Stack<ClassNode> stack = new Stack<>();
-                stack.push(classNode);
-                while (stack.size() > 0) {
-                    final ClassNode curr = stack.pop();
-                    final ClassNode superNode = this.getFromName(classMap, curr.superName);
-                    if (superNode != null) {
-                        stack.push(superNode);
-                        methodNameMappings.put(superNode.name + "." + methodNode.name + methodNode.desc, newName);
-                    }
-                    for (String itf : (List<String>) curr.interfaces) {
-                        final ClassNode itfNode = this.getFromName(classMap, itf);
-                        if (itfNode != null) {
-                            stack.push(itfNode);
-                            methodNameMappings.put(itfNode.name + "." + methodNode.name + methodNode.desc, newName);
-                        }
+                ClassNode parent = classMap.get(node.superName);
+                if (parent != null) {
+                    stack.push(parent);
+                }
+                for (String itf : (List<String>) node.interfaces) {
+                    ClassNode itfNode = classMap.get(itf);
+                    if (itfNode != null) {
+                        stack.push(itfNode);
                     }
                 }
+            }
+            String name = methodNameGenerator.next();
+            stack.push(owner);
+            while (stack.size() > 0) {
+                ClassNode node = stack.pop();
+                methodNameMappings.put(node.name + "." + m.name + m.desc, name);
+                classMap.values().forEach(classNode -> {
+                    if (classNode.superName.equals(node.name) || classNode.interfaces.contains(node.name)) {
+                        stack.push(classNode);
+                    }
+                });
             }
         }
 
@@ -96,6 +116,27 @@ public class RenameUnique extends Transformer {
                 || !this.isLocalMethod(classMap, classNode, methodNode.name);
     }
 
+    private MethodNode getMethod(ClassNode node, String name, String desc) {
+        for (MethodNode methodNode : (List<MethodNode>) node.methods) {
+            if (methodNode.name.equals(name) && methodNode.desc.equals(desc)) {
+                return methodNode;
+            }
+        }
+        return null;
+    }
+
+    private ClassNode getOwner(final Map<String, ClassNode> classMap, final MethodNode methodNode) {
+        return this.findFirst(classMap.values(), classNode -> classNode.methods.contains(methodNode));
+    }
+
+    private <T> T findFirst(Collection<T> collection, Predicate<T> predicate) {
+        for (T t : collection) {
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return null;
+    }
 
     /**
      * Check if a method name belongs to a class with reflection
@@ -133,7 +174,6 @@ public class RenameUnique extends Transformer {
      * @param classMap
      * @param classNode
      * @param methodName
-     * @param methodDesc
      * @return
      */
     private boolean isLocalMethod(final Map<String, ClassNode> classMap, final ClassNode classNode, final String methodName) {
