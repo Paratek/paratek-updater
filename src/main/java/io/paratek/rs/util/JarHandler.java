@@ -26,11 +26,6 @@ public class JarHandler {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
-    private static final String OSRS_URL = "http://oldschool1.runescape.com";
-    private static final String RS3_URL = "http://world1.runescape.com";
-
-    private static final Pattern OSRS_PATTERN = Pattern.compile("document.write\\('archive=(gamepack_\\d+.jar) '\\);");
-    private static final Pattern RS3_PATTERN = Pattern.compile("document.write\\('archive=(gamepack.+\\.jar) '\\);");
     private static final Pattern PARAM_PATTERN = Pattern.compile("document\\.write\\('<param name=\"(.{1,2})\" value=\"(.+)\">'\\);");
 
     private final Game game;
@@ -176,13 +171,20 @@ public class JarHandler {
         return params;
     }
 
+    /**
+     * Get the game that's being loaded
+     * @return
+     */
+    public Game getGame() {
+        return game;
+    }
 
     /**
      * Get the appropriate URL for selected game
      * @return
      */
     private String getURL() {
-        return this.game.equals(Game.OSRS) ? OSRS_URL : RS3_URL;
+        return this.game.getWorldUrl();
     }
 
 
@@ -191,7 +193,7 @@ public class JarHandler {
      * @return
      */
     private Pattern getPattern() {
-        return this.game.equals(Game.OSRS) ? OSRS_PATTERN : RS3_PATTERN;
+        return this.game.getArchivePattern();
     }
 
 

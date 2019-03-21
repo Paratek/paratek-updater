@@ -35,9 +35,7 @@ public class RenameUnique extends Transformer {
         logger.atInfo().log("Generating unique name mappings");
         for (ClassNode classNode : classMap.values()) {
             // Classes
-            if (classNode.name.equals("client")) {
-                classNameMappings.put(classNode.name, "Client");
-            } else {
+            if (!classNode.name.equals("client")) {
                 classNameMappings.put(classNode.name, classNameGenerator.next());
             }
             // Fields
@@ -56,9 +54,7 @@ public class RenameUnique extends Transformer {
             }
             // Methods
             for (MethodNode methodNode : (List<MethodNode>) classNode.methods) {
-                if (this.whiteList.contains(methodNode.name) || methodNode.name.contains("<")
-                        || (methodNode.access & Opcodes.ACC_NATIVE) != 0
-                        || !this.isLocalMethod(classMap, classNode, methodNode.name, methodNode.desc)) {
+                if (this.notLocal(classMap, classNode, methodNode)) {
                     continue;
                 }
                 final String newName = methodNameGenerator.next();
@@ -67,16 +63,16 @@ public class RenameUnique extends Transformer {
                 stack.push(classNode);
                 while (stack.size() > 0) {
                     final ClassNode curr = stack.pop();
-                    methodNameMappings.put(curr.name + "." + methodNode.name + methodNode.desc, newName);
-
                     final ClassNode superNode = this.getFromName(classMap, curr.superName);
                     if (superNode != null) {
                         stack.push(superNode);
+                        methodNameMappings.put(superNode.name + "." + methodNode.name + methodNode.desc, newName);
                     }
                     for (String itf : (List<String>) curr.interfaces) {
                         final ClassNode itfNode = this.getFromName(classMap, itf);
                         if (itfNode != null) {
                             stack.push(itfNode);
+                            methodNameMappings.put(itfNode.name + "." + methodNode.name + methodNode.desc, newName);
                         }
                     }
                 }
@@ -92,6 +88,12 @@ public class RenameUnique extends Transformer {
         this.applyMappings(classMap, simpleFieldRemapper);
         this.applyMappings(classMap, simpleMethodRemapper);
         this.applyMappings(classMap, simpleClassRemapper);
+    }
+
+    private boolean notLocal(Map<String, ClassNode> classMap, ClassNode classNode, MethodNode methodNode) {
+        return this.whiteList.contains(methodNode.name) || methodNode.name.contains("<")
+                || (methodNode.access & Opcodes.ACC_NATIVE) != 0
+                || !this.isLocalMethod(classMap, classNode, methodNode.name);
     }
 
 
@@ -134,7 +136,7 @@ public class RenameUnique extends Transformer {
      * @param methodDesc
      * @return
      */
-    private boolean isLocalMethod(final Map<String, ClassNode> classMap, final ClassNode classNode, final String methodName, final String methodDesc) {
+    private boolean isLocalMethod(final Map<String, ClassNode> classMap, final ClassNode classNode, final String methodName) {
         final Stack<ClassNode> stack = new Stack<>();
         stack.push(classNode);
         while (stack.size() > 0) {
@@ -175,7 +177,8 @@ public class RenameUnique extends Transformer {
         return true;
     }
 
-    private ClassNode getFromName(final Map<String, ClassNode> classMap, final String name) {
+    private ClassNode getFromName(final Map<String, ClassNode> classMap, String name) {
+        name = name.replace("/", ".");
         if (classMap.containsKey(name)) {
             return classMap.get(name);
         }
