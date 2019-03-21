@@ -4,19 +4,23 @@ import com.google.common.flogger.FluentLogger;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import io.paratek.rs.analysis.hook.Game;
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
 
 public class JarHandler {
 
@@ -56,6 +60,27 @@ public class JarHandler {
         try {
             this.loadLocal(local);
         } catch (UnirestException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Write out the ClassNodes to a jar file
+     * @param location
+     */
+    public void dumpTo(final String location) {
+        try {
+            JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
+            for (ClassNode cn : this.classNodeMap.values()) {
+                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                cn.accept(cw);
+                out.putNextEntry(new ZipEntry(cn.name + ".class"));
+                out.write(cw.toByteArray());
+                out.closeEntry();
+            }
+            out.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
