@@ -1,7 +1,7 @@
 package io.paratek.rs.deob.impl;
 
+import com.google.common.flogger.FluentLogger;
 import io.paratek.rs.deob.Transformer;
-import io.paratek.rs.deob.annotations.Metadata;
 import io.paratek.rs.util.BytecodeUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -17,6 +17,8 @@ import java.util.*;
 
 public class RenameUnique extends Transformer {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+
     private final List<String> whiteList = Collections.singletonList("main");
     private final Map<String, Class<?>> unknownClasses = new HashMap<>();
 
@@ -30,6 +32,7 @@ public class RenameUnique extends Transformer {
         final Map<String, String> classNameMappings = new HashMap<>();
         final Map<String, String> fieldNameMappings = new HashMap<>();
         final Map<String, String> methodNameMappings = new HashMap<>();
+        logger.atInfo().log("Generating unique name mappings");
         for (ClassNode classNode : classMap.values()) {
             // Classes
             if (classNode.name.equals("client")) {
@@ -58,30 +61,37 @@ public class RenameUnique extends Transformer {
                         || !this.isLocalMethod(classMap, classNode, methodNode.name, methodNode.desc)) {
                     continue;
                 }
+                final String newName = methodNameGenerator.next();
                 // Check if method is overridden / gotten from interface or super class
+                final Stack<ClassNode> stack = new Stack<>();
+                stack.push(classNode);
+                while (stack.size() > 0) {
+                    final ClassNode curr = stack.pop();
+                    methodNameMappings.put(curr.name + "." + methodNode.name + methodNode.desc, newName);
 
+                    final ClassNode superNode = this.getFromName(classMap, curr.superName);
+                    if (superNode != null) {
+                        stack.push(superNode);
+                    }
+                    for (String itf : (List<String>) curr.interfaces) {
+                        final ClassNode itfNode = this.getFromName(classMap, itf);
+                        if (itfNode != null) {
+                            stack.push(itfNode);
+                        }
+                    }
+                }
             }
         }
 
         // Do all of our modifications
-        final HashMap<String, ClassNode> modifiedNodeMap = new HashMap<>();
-
+        logger.atInfo().log("Applying unique name mappings");
         final SimpleRemapper simpleClassRemapper = new SimpleRemapper(classNameMappings);
         final SimpleRemapper simpleFieldRemapper = new SimpleRemapper(fieldNameMappings);
         final SimpleRemapper simpleMethodRemapper = new SimpleRemapper(methodNameMappings);
 
         this.applyMappings(classMap, simpleFieldRemapper);
         this.applyMappings(classMap, simpleMethodRemapper);
-//        this.applyMappings(classMap, simpleClassRemapper);
-
-//        for (Map.Entry<String, ClassNode> pair : classMap.entrySet()) {
-//            System.out.println(pair.getKey() + " -> " + pair.getValue().name);
-//        }
-
-        // Write everything back to the original HashMap
-//        for (Map.Entry<String, ClassNode> item : modifiedNodeMap.entrySet()) {
-//            classMap.put(item.getKey(), item.getValue());
-//        }
+        this.applyMappings(classMap, simpleClassRemapper);
     }
 
 
