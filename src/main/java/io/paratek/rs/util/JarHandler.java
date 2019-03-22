@@ -7,6 +7,8 @@ import io.paratek.rs.analysis.hook.Game;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -47,6 +50,7 @@ public class JarHandler {
         } catch (UnirestException | IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public JarHandler(final Game game, final File local) {
@@ -158,7 +162,7 @@ public class JarHandler {
         if (entry.getName().endsWith(".class")) {
             final ClassReader reader = new ClassReader(inputStream);
             final ClassNode classNode = new ClassNode();
-            reader.accept(classNode, 0);
+            reader.accept(classNode, ClassReader.EXPAND_FRAMES);
             this.getClassMap().put(entry.getName()
                     .replace(".class", "")
                     .replace("/", "."), classNode);
