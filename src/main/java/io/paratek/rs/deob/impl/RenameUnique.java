@@ -8,7 +8,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.SimpleRemapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -43,9 +42,9 @@ public class RenameUnique extends Transformer {
             // TODO:
                 // Need to find a more universal way to not rename stuff that is called from native methods
             if (classNode.name.equals("client")) {
-                classNameMappings.put(classNode.name, classNameGenerator.next());
-            } else {
                 classNameMappings.put(classNode.name, classNode.name);
+            } else {
+                classNameMappings.put(classNode.name, classNameGenerator.next());
             }
             // Fields
             for (FieldNode fieldNode : (List<FieldNode>) classNode.fields) {
@@ -113,6 +112,9 @@ public class RenameUnique extends Transformer {
         this.applyMappings(classMap, simpleMethodRemapper);
         this.applyMappings(classMap, simpleClassRemapper);
 
+        logger.atInfo().log("Renamed " + classNameGenerator.getCount() + " classes");
+        logger.atInfo().log("Renamed " + methodNameGenerator.getCount() + " methods");
+        logger.atInfo().log("Renamed " + fieldNameGenerator.getCount() + " fields");
     }
 
     private boolean notLocal(Map<String, ClassNode> classMap, ClassNode classNode, MethodNode methodNode) {
@@ -268,6 +270,9 @@ public class RenameUnique extends Transformer {
             this.count = 0;
         }
 
+        public int getCount() {
+            return count;
+        }
     }
 
 }
