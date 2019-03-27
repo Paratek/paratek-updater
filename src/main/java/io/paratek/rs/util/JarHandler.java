@@ -4,21 +4,17 @@ import com.google.common.flogger.FluentLogger;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import io.paratek.rs.analysis.hook.Game;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
@@ -32,18 +28,12 @@ public class JarHandler {
     private static final Pattern PARAM_PATTERN = Pattern.compile("document\\.write\\('<param name=\"(.{1,2})\" value=\"(.+)\">'\\);");
 
     private final Game game;
+    private final File file;
     private final HashMap<String, ClassNode> classNodeMap = new HashMap<>();
-
-    public static JarHandler getRemoteOSRS() {
-        return new JarHandler(Game.OSRS);
-    }
-
-    public static JarHandler getRemoteRS3() {
-        return new JarHandler(Game.RS3);
-    }
 
     public JarHandler(final Game game) {
         this.game = game;
+        this.file = null;
         logger.atInfo().log("Loading JarHandler");
         try {
             this.loadRemote();
@@ -55,6 +45,7 @@ public class JarHandler {
 
     public JarHandler(final Game game, final File local) {
         this.game = game;
+        this.file = local;
         logger.atInfo().log("Loading JarHandler");
         try {
             this.loadLocal(local);
@@ -63,6 +54,13 @@ public class JarHandler {
         }
     }
 
+    public static JarHandler getRemoteOSRS() {
+        return new JarHandler(Game.OSRS);
+    }
+
+    public static JarHandler getRemoteRS3() {
+        return new JarHandler(Game.RS3);
+    }
 
     /**
      * Write out the ClassNodes to a jar file
@@ -71,22 +69,65 @@ public class JarHandler {
     public void dumpTo(final String location) {
         try {
             JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
+            final JarFile original = new JarFile(this.file);
+            Enumeration entries = original.entries();
+            byte[] buffer = new byte[512];
+            while (entries.hasMoreElements()) {
+                JarEntry entry = (JarEntry) entries.nextElement();
+                if (!entry.getName().endsWith(".class")) {
+                    // There are no other non class files but for my sanity add them anyway
+                    ZipEntry newEntry = new ZipEntry(entry.getName());
+                    out.putNextEntry(newEntry);
+                    InputStream in = original.getInputStream(entry);
+                    while (0 < in.available()) {
+                        int read = in.read(buffer);
+                        if (read > 0) {
+                            out.write(buffer, 0, read);
+                        }
+                    }
+                    in.close();
+                }
+            }
             for (ClassNode cn : this.classNodeMap.values()) {
                 ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 cn.accept(cw);
-                out.putNextEntry(new ZipEntry(cn.name + ".class"));
+                final ZipEntry newEntry = new ZipEntry(cn.name + ".class");
+                out.putNextEntry(newEntry);
                 out.write(cw.toByteArray());
                 out.closeEntry();
             }
+            out.closeEntry();
             out.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+//    /**
+//     * Write out the ClassNodes to a jar file
+//     *
+//     * @param location
+//     */
+//    public void dumpTo(final String location) {
+//        try {
+//            JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
+//            for (ClassNode cn : this.classNodeMap.values()) {
+//                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+//                cn.accept(cw);
+//                out.putNextEntry(new ZipEntry(cn.name + ".class"));
+//                out.write(cw.toByteArray());
+//                out.closeEntry();
+//            }
+//            out.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
 
     /**
      * Opens the JarInputStream from a FileInputStream
+     *
      * @param jarFile
      * @throws UnirestException
      * @throws IOException
@@ -101,6 +142,7 @@ public class JarHandler {
 
     /**
      * Opens the JarInputStream from the internet
+     *
      * @throws UnirestException
      * @throws IOException
      */
@@ -116,6 +158,7 @@ public class JarHandler {
 
     /**
      * Reads the entries of the JarInputStream JarHandler#classNodeMap
+     *
      * @param params
      * @param inputStream
      * @throws IOException
@@ -154,6 +197,7 @@ public class JarHandler {
 
     /**
      * Reads JarEntry from JarInputStream
+     *
      * @param inputStream
      * @param entry
      * @throws IOException
@@ -172,7 +216,8 @@ public class JarHandler {
 
     /**
      * Gets the parameters
-     *  jar url is stored in key "jarpath"
+     * jar url is stored in key "jarpath"
+     *
      * @return
      * @throws UnirestException
      */
@@ -197,6 +242,7 @@ public class JarHandler {
 
     /**
      * Get the game that's being loaded
+     *
      * @return
      */
     public Game getGame() {
@@ -205,6 +251,7 @@ public class JarHandler {
 
     /**
      * Get the appropriate URL for selected game
+     *
      * @return
      */
     private String getURL() {
@@ -214,6 +261,7 @@ public class JarHandler {
 
     /**
      * Get appropriate URL for selected game
+     *
      * @return
      */
     private Pattern getPattern() {
@@ -223,6 +271,7 @@ public class JarHandler {
 
     /**
      * Get the map of ClassNodes
+     *
      * @return
      */
     public HashMap<String, ClassNode> getClassMap() {

@@ -1,7 +1,7 @@
 package io.paratek.rs.deob.impl;
 
 import io.paratek.rs.deob.Transformer;
-import org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
 import java.util.Map;
 

@@ -1,6 +1,6 @@
 package io.paratek.rs.loader;
 
-import org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
 import java.applet.Applet;
 import java.awt.*;
@@ -11,12 +11,11 @@ import java.util.Map;
 
 public final class Rs2Applet extends Applet {
 
+    private final Map<String, ClassNode> classMap;
     private Object mainClassInstance = null;
     private Class<?> mainClass = null;
 
-    private final Map<String, ClassNode> classMap;
-
-    public Rs2Applet(final Map<String, ClassNode> classMap){
+    public Rs2Applet(final Map<String, ClassNode> classMap) {
         this.classMap = classMap;
     }
 

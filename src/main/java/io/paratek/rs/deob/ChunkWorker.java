@@ -1,6 +1,6 @@
 package io.paratek.rs.deob;
 
-import org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
 import java.util.Map;
 

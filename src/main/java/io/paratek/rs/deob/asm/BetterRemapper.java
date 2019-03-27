@@ -1,6 +1,6 @@
 package io.paratek.rs.deob.asm;
 
-import org.objectweb.asm.commons.Remapper;
+import jdk.internal.org.objectweb.asm.commons.Remapper;
 
 import java.util.Collections;
 import java.util.Map;

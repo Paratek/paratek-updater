@@ -1,8 +1,8 @@
 package io.paratek.rs.deob.asm;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
+import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
+import jdk.internal.org.objectweb.asm.tree.LdcInsnNode;
+import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
 
 public class TryCatchWrapper {
 

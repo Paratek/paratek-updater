@@ -1,17 +1,12 @@
 package io.paratek.rs.loader;
 
-import com.mashape.unirest.http.Unirest;
 import io.paratek.rs.analysis.hook.Game;
 import io.paratek.rs.util.JarHandler;
-import org.json.JSONObject;
-import org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.applet.Applet;
 import java.awt.*;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Frame extends JFrame {
@@ -32,10 +27,6 @@ public class Frame extends JFrame {
         super.getContentPane().setBackground(new Color(64, 72, 85));
         super.getContentPane().setPreferredSize(new Dimension(800, 600));
         super.pack();
-    }
-
-    public JPanel getGamePanel() {
-        return gamePanel;
     }
 
     public static void start(final JarHandler jarHandler) {
@@ -98,6 +89,10 @@ public class Frame extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public JPanel getGamePanel() {
+        return gamePanel;
     }
 
 }

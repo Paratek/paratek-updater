@@ -1,6 +1,6 @@
 package io.paratek.rs.deob;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
+import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.ArrayList;
 import java.util.List;

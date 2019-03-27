@@ -4,13 +4,13 @@ import com.google.common.flogger.FluentLogger;
 import io.paratek.rs.deob.Transformer;
 import io.paratek.rs.deob.asm.BetterRemapper;
 import io.paratek.rs.util.BytecodeUtils;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.internal.org.objectweb.asm.commons.RemappingClassAdapter;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.tree.FieldNode;
+import jdk.internal.org.objectweb.asm.tree.MethodNode;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -40,7 +40,8 @@ public class RenameUnique extends Transformer {
         for (ClassNode classNode : classMap.values()) {
             // Classes
             // TODO:
-                // Need to find a more universal way to not rename stuff that is called from native methods
+            // Need to find a more universal way to not rename stuff that is called from native methods
+            System.out.println(classNode.name);
             if (classNode.name.equals("client")) {
                 classNameMappings.put(classNode.name, classNode.name);
             } else {
@@ -48,6 +49,7 @@ public class RenameUnique extends Transformer {
             }
             // Fields
             for (FieldNode fieldNode : (List<FieldNode>) classNode.fields) {
+                System.out.println("    Field: " + fieldNode.name + " ");
                 String name = fieldNameGenerator.next();
                 final Stack<ClassNode> classNodeStack = new Stack<>();
                 classNodeStack.push(classNode);
@@ -67,6 +69,7 @@ public class RenameUnique extends Transformer {
 
         methods:
         for (MethodNode m : methodNodes) {
+            System.out.println("    Method: " + m.name + " ");
             ClassNode owner = this.getOwner(classMap, m);
             if (this.notLocal(classMap, owner, m)) {
                 continue;
@@ -108,8 +111,8 @@ public class RenameUnique extends Transformer {
         final BetterRemapper simpleFieldRemapper = new BetterRemapper(fieldNameMappings);
         final BetterRemapper simpleMethodRemapper = new BetterRemapper(methodNameMappings);
 
-        this.applyMappings(classMap, simpleFieldRemapper);
-        this.applyMappings(classMap, simpleMethodRemapper);
+//        this.applyMappings(classMap, simpleFieldRemapper);
+//        this.applyMappings(classMap, simpleMethodRemapper);
         this.applyMappings(classMap, simpleClassRemapper);
 
         logger.atInfo().log("Renamed " + classNameGenerator.getCount() + " classes");
@@ -147,6 +150,7 @@ public class RenameUnique extends Transformer {
 
     /**
      * Check if a method name belongs to a class with reflection
+     *
      * @param clazz
      * @param methodName
      * @return
@@ -163,6 +167,7 @@ public class RenameUnique extends Transformer {
 
     /**
      * Uses reflection to lookup a class name
+     *
      * @param name
      * @return
      */
@@ -178,6 +183,7 @@ public class RenameUnique extends Transformer {
 
     /**
      * Checks if a Method belongs to the code that's being deobfuscated and is not a native class
+     *
      * @param classMap
      * @param classNode
      * @param methodName
@@ -237,8 +243,8 @@ public class RenameUnique extends Transformer {
         for (ClassNode classNode : new ArrayList<>(classMap.values())) {
             ClassReader classReader = new ClassReader(BytecodeUtils.getClassNodeBytes(classNode));
             ClassWriter classWriter = new ClassWriter(classReader, 0);
-            ClassRemapper remappingClassAdapter = new ClassRemapper(classWriter, remapper);
-            classReader.accept(remappingClassAdapter, 0);
+            RemappingClassAdapter remappingClassAdapter = new RemappingClassAdapter(classWriter, remapper);
+            classReader.accept(remappingClassAdapter, ClassReader.EXPAND_FRAMES);
             classReader = new ClassReader(classWriter.toByteArray());
             ClassNode newNode = new ClassNode();
             classReader.accept(newNode, 0);
@@ -251,8 +257,8 @@ public class RenameUnique extends Transformer {
 
     private class NameGenerator {
 
-        private int count = 0;
         private final String base;
+        private int count = 0;
 
         NameGenerator(String base) {
             this.base = base;

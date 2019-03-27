@@ -29,6 +29,162 @@ import java.util.zip.GZIPInputStream;
  */
 public class InnerPackDecrypter {
 
+    static int[] p;
+    private static char[] m;
+
+    static {
+        label0:
+        {
+            p = new int[128];
+            int i1 = 0;
+            while (~i1 > ~p.length) {
+                p[i1] = -1;
+                i1++;
+            }
+            break label0;
+
+        }
+        label1:
+        {
+            int j1 = 65;
+            while (-91 <= ~j1) {
+                p[j1] = -65 + j1;
+                j1++;
+            }
+            break label1;
+        }
+        label2:
+        {
+            int k1 = 97;
+            while (122 >= k1) {
+                p[k1] = k1 + -71;
+                k1++;
+            }
+            break label2;
+        }
+        label3:
+        {
+            int l1 = 48;
+            while (-58 <= ~l1) {
+                p[l1] = (-48 + l1) - -52;
+                l1++;
+            }
+            break label3;
+        }
+        label4:
+        {
+            p[43] = 62;
+            int ai[] = p;
+            ai[42] = 62;
+            p[47] = 63;
+            int ai1[] = p;
+            ai1[45] = 63;
+            m = new char[64];
+            int i2 = 0;
+            while (26 > i2) {
+                m[i2] = (char) (65 + i2);
+                i2++;
+            }
+            break label4;
+        }
+        label5:
+        {
+            int j2 = 26;
+            while (~j2 > -53) {
+                m[j2] = (char) (-26 + (97 - -j2));
+                j2++;
+            }
+            break label5;
+        }
+        label6:
+        {
+            int k2 = 52;
+            while (k2 < 62) {
+                m[k2] = (char) (-52 + k2 + 48);
+                k2++;
+            }
+            break label6;
+        }
+        m[63] = '/';
+        m[62] = '+';
+    }
+
+    static {
+        label0:
+        {
+            p = new int[128];
+            int i1 = 0;
+            while (~i1 > ~p.length) {
+                p[i1] = -1;
+                i1++;
+            }
+            break label0;
+        }
+        label1:
+        {
+            int j1 = 65;
+            while (-91 <= ~j1) {
+                p[j1] = -65 + j1;
+                j1++;
+            }
+            break label1;
+        }
+        label2:
+        {
+            int k1 = 97;
+            while (122 >= k1) {
+                p[k1] = k1 + -71;
+                k1++;
+            }
+            break label2;
+        }
+        label3:
+        {
+            int l1 = 48;
+            while (-58 <= ~l1) {
+                p[l1] = (-48 + l1) - -52;
+                l1++;
+            }
+            break label3;
+        }
+        label4:
+        {
+            p[43] = 62;
+            int ai[] = p;
+            ai[42] = 62;
+            p[47] = 63;
+            int ai1[] = p;
+            ai1[45] = 63;
+            m = new char[64];
+            int i2 = 0;
+            while (26 > i2) {
+                m[i2] = (char) (65 + i2);
+                i2++;
+            }
+            break label4;
+        }
+        label5:
+        {
+            int j2 = 26;
+            while (~j2 > -53) {
+                m[j2] = (char) (-26 + (97 - -j2));
+                j2++;
+            }
+            break label5;
+        }
+        label6:
+        {
+            int k2 = 52;
+            while (k2 < 62) {
+                m[k2] = (char) (-52 + k2 + 48);
+                k2++;
+            }
+            break label6;
+        }
+        m[63] = '/';
+        m[62] = '+';
+    }
+
     static byte[] decrypt(String name) throws Exception {
         int j1 = 0;
         int i;
@@ -46,11 +202,16 @@ public class InnerPackDecrypter {
         } catch (RuntimeException runtimeexception) {
             throw new Exception("");
         }
-        label0: {
-            label1: {
-                label2: {
-                    label3: {
-                        label4: {
+        label0:
+        {
+            label1:
+            {
+                label2:
+                {
+                    label3:
+                    {
+                        label4:
+                        {
                             j = -4 & i + 3;
                             k = 3 * (j / 4);
                             if (~i >= ~(-2 + j))
@@ -350,162 +511,5 @@ public class InnerPackDecrypter {
             e.printStackTrace();
         }
         return classes;
-    }
-
-    static int[] p;
-    private static char[] m;
-
-    static {
-        label0:
-        {
-            p = new int[128];
-            int i1 = 0;
-            while (~i1 > ~p.length) {
-                p[i1] = -1;
-                i1++;
-            }
-            break label0;
-
-        }
-        label1:
-        {
-            int j1 = 65;
-            while (-91 <= ~j1) {
-                p[j1] = -65 + j1;
-                j1++;
-            }
-            break label1;
-        }
-        label2:
-        {
-            int k1 = 97;
-            while (122 >= k1) {
-                p[k1] = k1 + -71;
-                k1++;
-            }
-            break label2;
-        }
-        label3:
-        {
-            int l1 = 48;
-            while (-58 <= ~l1) {
-                p[l1] = (-48 + l1) - -52;
-                l1++;
-            }
-            break label3;
-        }
-        label4:
-        {
-            p[43] = 62;
-            int ai[] = p;
-            ai[42] = 62;
-            p[47] = 63;
-            int ai1[] = p;
-            ai1[45] = 63;
-            m = new char[64];
-            int i2 = 0;
-            while (26 > i2) {
-                m[i2] = (char) (65 + i2);
-                i2++;
-            }
-            break label4;
-        }
-        label5:
-        {
-            int j2 = 26;
-            while (~j2 > -53) {
-                m[j2] = (char) (-26 + (97 - -j2));
-                j2++;
-            }
-            break label5;
-        }
-        label6:
-        {
-            int k2 = 52;
-            while (k2 < 62) {
-                m[k2] = (char) (-52 + k2 + 48);
-                k2++;
-            }
-            break label6;
-        }
-        m[63] = '/';
-        m[62] = '+';
-    }
-
-
-    static {
-        label0:
-        {
-            p = new int[128];
-            int i1 = 0;
-            while (~i1 > ~p.length) {
-                p[i1] = -1;
-                i1++;
-            }
-            break label0;
-        }
-        label1:
-        {
-            int j1 = 65;
-            while (-91 <= ~j1) {
-                p[j1] = -65 + j1;
-                j1++;
-            }
-            break label1;
-        }
-        label2:
-        {
-            int k1 = 97;
-            while (122 >= k1) {
-                p[k1] = k1 + -71;
-                k1++;
-            }
-            break label2;
-        }
-        label3:
-        {
-            int l1 = 48;
-            while (-58 <= ~l1) {
-                p[l1] = (-48 + l1) - -52;
-                l1++;
-            }
-            break label3;
-        }
-        label4:
-        {
-            p[43] = 62;
-            int ai[] = p;
-            ai[42] = 62;
-            p[47] = 63;
-            int ai1[] = p;
-            ai1[45] = 63;
-            m = new char[64];
-            int i2 = 0;
-            while (26 > i2) {
-                m[i2] = (char) (65 + i2);
-                i2++;
-            }
-            break label4;
-        }
-        label5:
-        {
-            int j2 = 26;
-            while (~j2 > -53) {
-                m[j2] = (char) (-26 + (97 - -j2));
-                j2++;
-            }
-            break label5;
-        }
-        label6:
-        {
-            int k2 = 52;
-            while (k2 < 62) {
-                m[k2] = (char) (-52 + k2 + 48);
-                k2++;
-            }
-            break label6;
-        }
-        m[63] = '/';
-        m[62] = '+';
     }
 }

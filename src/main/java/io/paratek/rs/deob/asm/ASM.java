@@ -1,7 +1,6 @@
 package io.paratek.rs.deob.asm;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.MethodNode;
+import jdk.internal.org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -63,7 +63,8 @@ public class RSAppletContext implements AppletContext {
     }
 
     @Override
-    public void showStatus(String status) { }
+    public void showStatus(String status) {
+    }
 
     @Override
     public void setStream(String key, InputStream stream) throws IOException {

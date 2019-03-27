@@ -1,7 +1,7 @@
 package io.paratek.rs.loader;
 
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.tree.ClassNode;
 
 import java.security.AllPermission;
 import java.security.CodeSource;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * A ClassLoader that uses ClassNodes instead of Classes or URLClasses?
- *
+ * <p>
  * Not going to bother documenting each function, learn about ClassLoaders, functionality is obvious
  *
  * @author Parametric
@@ -45,8 +45,7 @@ public class ClassNodeLoader extends ClassLoader {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         try {
             node.accept(cw);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         final byte[] b = cw.toByteArray();

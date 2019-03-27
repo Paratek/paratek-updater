@@ -8,4 +8,5 @@ import java.util.HashMap;
  *
  * @author Parametric
  */
-public class Configs extends HashMap<String, String> { }
+public class Configs extends HashMap<String, String> {
+}

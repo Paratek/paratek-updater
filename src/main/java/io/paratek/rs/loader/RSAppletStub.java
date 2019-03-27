@@ -27,6 +27,10 @@ public class RSAppletStub implements AppletStub {
         return this.active;
     }
 
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     @Override
     public URL getDocumentBase() {
         try {
@@ -64,9 +68,5 @@ public class RSAppletStub implements AppletStub {
         if (applet != null) {
             applet.resize(width, height);
         }
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 }

@@ -27,7 +27,7 @@ public class ConfigLoader {
             HttpResponse<String> response = Unirest.get(this.game.getWorldUrl() + "/jav_config.ws")
                     .asString();
 
-            String res = response.getBody().replace("param=", "").replace("msg=" , "");
+            String res = response.getBody().replace("param=", "").replace("msg=", "");
             String[] results = res.split("\n");
             for (String result : results) {
                 if (result.length() > 0) {

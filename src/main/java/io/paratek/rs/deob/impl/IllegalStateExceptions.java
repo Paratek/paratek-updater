@@ -4,8 +4,8 @@ import com.google.common.flogger.FluentLogger;
 import io.paratek.rs.deob.InsnPattern;
 import io.paratek.rs.deob.Transformer;
 import io.paratek.rs.deob.asm.MethodNodeWrapper;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.internal.org.objectweb.asm.tree.*;
 
 import java.util.ListIterator;
 import java.util.Map;
@@ -24,11 +24,12 @@ public class IllegalStateExceptions extends Transformer {
 
     /**
      * Locate a new IllegalStateException, traverse backwards checking for an LDC or VarInsnNode for the last parameter
+     *
      * @param methodNode
      */
     private void processMethod(final MethodNode methodNode) {
         final MethodNodeWrapper wrapper = new MethodNodeWrapper(methodNode);
-        for (ListIterator it = wrapper.getMethodNode().instructions.iterator(); it.hasNext();) {
+        for (ListIterator it = wrapper.getMethodNode().instructions.iterator(); it.hasNext(); ) {
             AbstractInsnNode insnNode = (AbstractInsnNode) it.next();
             final boolean pattern = new InsnPattern(insnNode, node -> node instanceof VarInsnNode && ((VarInsnNode) node).var == wrapper.getOpaquePredicateVarIndex())
                     .next(node -> node instanceof LdcInsnNode || node instanceof IntInsnNode || (node.getOpcode() >= Opcodes.ICONST_M1 && node.getOpcode() <= Opcodes.ICONST_5))
