@@ -7,7 +7,7 @@ import java.io.File;
 public class RunningTest {
 
     public static void main(String[] args) {
-        final JarHandler handler = new JarHandler(Game.OSRS, new File("C:\\Users\\wowma\\IdeaProjects\\paratek-updater\\src\\main\\resources\\gamepack_178-deob.jar"));
+        final JarHandler handler = new JarHandler(Game.OSRS, new File("/home/sysassist/IdeaProjects/deob/src/main/resources/gamepack_180-deob.jar"));
         Frame.start(handler);
     }
 

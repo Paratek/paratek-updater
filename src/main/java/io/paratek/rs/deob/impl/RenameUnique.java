@@ -11,8 +11,16 @@ import jdk.internal.org.objectweb.asm.commons.RemappingClassAdapter;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.FieldNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -26,6 +34,17 @@ public class RenameUnique extends Transformer {
 
     @Override
     public void run(Map<String, ClassNode> classMap) {
+        String str = "";
+        try {
+            final List<String>  lines = Files.readAllLines(Paths.get("/home/sysassist/Desktop/179/generated-resources/hooks.json"));
+            final StringBuilder builder = new StringBuilder();
+            lines.forEach(builder::append);
+            str = builder.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final JSONArray hooks = new JSONArray(str);
+
         // Create our mappings
         final NameGenerator classNameGenerator = new NameGenerator("class");
         final NameGenerator methodNameGenerator = new NameGenerator("method");
@@ -41,21 +60,39 @@ public class RenameUnique extends Transformer {
             // Classes
             // TODO:
             // Need to find a more universal way to not rename stuff that is called from native methods
-            System.out.println(classNode.name);
             if (classNode.name.equals("client")) {
                 classNameMappings.put(classNode.name, classNode.name);
             } else {
-                classNameMappings.put(classNode.name, classNameGenerator.next());
+                for (int i = 0; i < hooks.length(); i++) {
+                    final JSONObject object = hooks.getJSONObject(i);
+                    final String name = object.getString("name");
+                    if (name.equals(classNode.name)) {
+                        classNameMappings.put(classNode.name, object.getString("class"));
+                        logger.atInfo().log("Mapping class " + classNode.name + " to " + object.getString("class"));
+                    }
+                }
             }
             // Fields
-            for (FieldNode fieldNode : (List<FieldNode>) classNode.fields) {
-                System.out.println("    Field: " + fieldNode.name + " ");
-                String name = fieldNameGenerator.next();
+            for (FieldNode fieldNode : classNode.fields) {
                 final Stack<ClassNode> classNodeStack = new Stack<>();
                 classNodeStack.push(classNode);
                 while (classNodeStack.size() > 0) {
                     ClassNode owner = classNodeStack.pop();
-                    fieldNameMappings.put(owner.name + "." + fieldNode.name + "-" + fieldNode.desc, name);
+                    for (int i = 0; i < hooks.length(); i++) {
+                        final JSONObject object = hooks.getJSONObject(i);
+                        final String name = object.getString("name");
+                        if (name.equals(owner.name)) {
+                            final JSONArray methods = object.getJSONArray("fields");
+                            for (int j = 0; j < methods.length(); j++) {
+                                final JSONObject method = methods.getJSONObject(j);
+                                if (method.getString("name").equals(fieldNode.name) && method.getString("descriptor").equals(fieldNode.desc)) {
+                                    fieldNameMappings.put(owner.name + "." + fieldNode.name + "-" + fieldNode.desc, method.getString("field"));
+                                    System.out.println("Mapping " + owner.name + "." + fieldNode.name + fieldNode.desc + " to " + method.getString("field"));
+                                }
+                            }
+                        }
+                    }
+
                     for (ClassNode supercn : classMap.values()) {
                         if (supercn.superName.equals(owner.name)) {
                             classNodeStack.push(supercn);
@@ -64,12 +101,11 @@ public class RenameUnique extends Transformer {
                 }
             }
             // Methods
-            methodNodes.addAll((List<MethodNode>) classNode.methods);
+            methodNodes.addAll(classNode.methods);
         }
 
         methods:
         for (MethodNode m : methodNodes) {
-            System.out.println("    Method: " + m.name + " ");
             ClassNode owner = this.getOwner(classMap, m);
             if (this.notLocal(classMap, owner, m)) {
                 continue;
@@ -86,18 +122,31 @@ public class RenameUnique extends Transformer {
                 if (parent != null) {
                     stack.push(parent);
                 }
-                for (String itf : (List<String>) node.interfaces) {
+                for (String itf : node.interfaces) {
                     ClassNode itfNode = classMap.get(itf);
                     if (itfNode != null) {
                         stack.push(itfNode);
                     }
                 }
             }
-            String name = methodNameGenerator.next();
+//            String name = methodNameGenerator.next();
             stack.push(owner);
             while (stack.size() > 0) {
                 ClassNode node = stack.pop();
-                methodNameMappings.put(node.name + "." + m.name + m.desc, name);
+                for (int i = 0; i < hooks.length(); i++) {
+                    final JSONObject object = hooks.getJSONObject(i);
+                    final String name = object.getString("name");
+                    if (name.equals(node.name)) {
+                        final JSONArray methods = object.getJSONArray("methods");
+                        for (int j = 0; j < methods.length(); j++) {
+                            final JSONObject method = methods.getJSONObject(j);
+                            if (method.getString("name").equals(m.name) && method.getString("descriptor").equals(m.desc)) {
+                                methodNameMappings.put(node.name + "." + m.name + m.desc, method.getString("method"));
+                                System.out.println("Mapping " + node.name + "." + m.name + m.desc + " to " + method.getString("method"));
+                            }
+                        }
+                    }
+                }
                 classMap.values().forEach(classNode -> {
                     if (classNode.superName.equals(node.name) || classNode.interfaces.contains(node.name)) {
                         stack.push(classNode);
@@ -111,8 +160,8 @@ public class RenameUnique extends Transformer {
         final BetterRemapper simpleFieldRemapper = new BetterRemapper(fieldNameMappings);
         final BetterRemapper simpleMethodRemapper = new BetterRemapper(methodNameMappings);
 
-//        this.applyMappings(classMap, simpleFieldRemapper);
-//        this.applyMappings(classMap, simpleMethodRemapper);
+        this.applyMappings(classMap, simpleFieldRemapper);
+        this.applyMappings(classMap, simpleMethodRemapper);
         this.applyMappings(classMap, simpleClassRemapper);
 
         logger.atInfo().log("Renamed " + classNameGenerator.getCount() + " classes");

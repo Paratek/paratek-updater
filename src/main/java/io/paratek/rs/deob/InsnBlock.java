@@ -12,6 +12,7 @@ public class InsnBlock {
     private final LinkedList<AbstractInsnNode> insnNodes = new LinkedList<>();
     private InsnBlock child, parent, gotoBlock;
     private boolean traversed = false;
+    private int index = -1, lowlink = -1;
 
     public void addNode(final AbstractInsnNode node) {
         this.insnNodes.addLast(node);
@@ -33,12 +34,12 @@ public class InsnBlock {
         this.parent = parent;
     }
 
-    public void setGotoBlock(InsnBlock gotoBlock) {
-        this.gotoBlock = gotoBlock;
-    }
-
     public InsnBlock getGotoBlock() {
         return gotoBlock;
+    }
+
+    public void setGotoBlock(InsnBlock gotoBlock) {
+        this.gotoBlock = gotoBlock;
     }
 
     public LabelNode getEndingLabelNode() {
@@ -60,4 +61,19 @@ public class InsnBlock {
         return insnNodes;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public int getLowlink() {
+        return lowlink;
+    }
+
+    public void setLowlink(int lowlink) {
+        this.lowlink = lowlink;
+    }
 }

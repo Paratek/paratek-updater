@@ -64,9 +64,10 @@ public class JarHandler {
 
     /**
      * Write out the ClassNodes to a jar file
+     *
      * @param location
      */
-    public void dumpTo(final String location) {
+    public void dumpToWithMeta(final String location) {
         try {
             JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
             final JarFile original = new JarFile(this.file);
@@ -103,26 +104,26 @@ public class JarHandler {
         }
     }
 
-//    /**
-//     * Write out the ClassNodes to a jar file
-//     *
-//     * @param location
-//     */
-//    public void dumpTo(final String location) {
-//        try {
-//            JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
-//            for (ClassNode cn : this.classNodeMap.values()) {
-//                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-//                cn.accept(cw);
-//                out.putNextEntry(new ZipEntry(cn.name + ".class"));
-//                out.write(cw.toByteArray());
-//                out.closeEntry();
-//            }
-//            out.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    /**
+     * Write out the ClassNodes to a jar file
+     *
+     * @param location
+     */
+    public void dumpTo(final String location) {
+        try {
+            JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
+            for (ClassNode cn : this.classNodeMap.values()) {
+                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                cn.accept(cw);
+                out.putNextEntry(new ZipEntry(cn.name + ".class"));
+                out.write(cw.toByteArray());
+                out.closeEntry();
+            }
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     /**

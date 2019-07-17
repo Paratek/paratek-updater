@@ -1,7 +1,6 @@
 package io.paratek.rs.deob.impl;
 
 import io.paratek.rs.deob.InsnBlock;
-import io.paratek.rs.deob.InsnPattern;
 import io.paratek.rs.deob.Transformer;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.tree.*;
@@ -9,6 +8,9 @@ import jdk.internal.org.objectweb.asm.tree.*;
 import java.util.*;
 
 public class ControlFlow extends Transformer {
+
+    private int index = 0;
+    private Stack<InsnBlock> blockStack = new Stack<>();
 
     @Override
     public void run(Map<String, ClassNode> classMap) {
@@ -21,7 +23,7 @@ public class ControlFlow extends Transformer {
                 .forEach(this::accept);
     }
 
-    private void accept(final MethodNode methodNode) {
+    private List<InsnBlock> buildBlocks(final MethodNode methodNode) {
         final List<InsnBlock> insnBlocks = new ArrayList<>();
         InsnBlock currentBlock = new InsnBlock();
         for (ListIterator it = methodNode.instructions.iterator(); it.hasNext(); ) {
@@ -48,12 +50,22 @@ public class ControlFlow extends Transformer {
                 }
             }
         }
-        if (insnBlocks.size() > 0) {
-            final InsnList list = new InsnList();
-            this.dfs(list, insnBlocks.get(0));
-            for (ListIterator<AbstractInsnNode> it = methodNode.instructions.iterator(); it.hasNext(); ) {
-                AbstractInsnNode insn = it.next();
+        return insnBlocks;
+    }
 
+    private List<InsnBlock> tarjanConnect(InsnBlock block) {
+        block.setIndex(this.index);
+        block.setLowlink(this.index++);
+
+    }
+
+    private void accept(final MethodNode methodNode) {
+        final List<InsnBlock> insnBlocks = this.buildBlocks(methodNode);
+        if (insnBlocks.size() > 0) {
+            for (InsnBlock b : insnBlocks) {
+                if (b.getIndex() == -1) {
+                    this.tarjanConnect(b);
+                }
             }
 //            methodNode.instructions = list;
 
