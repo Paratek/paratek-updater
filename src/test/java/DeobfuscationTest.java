@@ -2,7 +2,6 @@ import io.paratek.rs.analysis.hook.Game;
 import io.paratek.rs.deob.TransformationMediator;
 import io.paratek.rs.deob.impl.ControlFlow;
 import io.paratek.rs.deob.impl.IllegalStateExceptions;
-import io.paratek.rs.deob.impl.RenameUnique;
 import io.paratek.rs.deob.impl.RuntimeExceptions;
 import io.paratek.rs.util.JarHandler;
 
