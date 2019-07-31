@@ -18,14 +18,14 @@ public class Frame extends JFrame {
         super.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         /* Setup GamePanel layout */
         gamePanel.setLayout(null);
-        gamePanel.setSize(new Dimension(800, 600));
+        gamePanel.setSize(new Dimension(765, 503));
         gamePanel.setLocation(0, 0);
         gamePanel.setBackground(new Color(36, 41, 49));
 
         super.getContentPane().setLayout(null);
         super.getContentPane().add(gamePanel);
         super.getContentPane().setBackground(new Color(64, 72, 85));
-        super.getContentPane().setPreferredSize(new Dimension(800, 600));
+        super.getContentPane().setPreferredSize(new Dimension(765, 503));
         super.pack();
     }
 
@@ -53,7 +53,7 @@ public class Frame extends JFrame {
                 ((RSAppletContext) appletStub.getAppletContext()).setApplet(applet);
                 applet.setStub(appletStub);
                 applet.init();
-                applet.setSize(800, 600);
+                applet.setSize(765, 503);
                 appletStub.setActive(true);
             });
         } catch (Exception e) {

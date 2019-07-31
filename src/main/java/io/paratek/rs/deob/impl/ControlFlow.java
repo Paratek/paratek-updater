@@ -1,5 +1,7 @@
 package io.paratek.rs.deob.impl;
 
+import com.google.common.flogger.FluentLogger;
+import io.paratek.rs.deob.MethodBlock;
 import io.paratek.rs.deob.Transformer;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.tree.MethodNode;
@@ -7,6 +9,12 @@ import jdk.internal.org.objectweb.asm.tree.MethodNode;
 import java.util.Map;
 
 public class ControlFlow extends Transformer {
+
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+
+    private int sortedMethods = 0;
+    private int sortedBlocks = 0;
+    private int removedblocks = 0;
 
     @Override
     public void run(Map<String, ClassNode> classMap) {
@@ -17,10 +25,22 @@ public class ControlFlow extends Transformer {
         classMap.get("client").methods.stream()
                 .filter(methodNode -> methodNode.tryCatchBlocks.size() == 0)
                 .forEach(this::accept);
+
+//        final MethodNode mn = classMap.get("client").methods.stream()
+//                .filter(methodNode -> methodNode.tryCatchBlocks.size() == 0)
+//                .findFirst().get();
+//        this.accept(mn);
+
+        logger.atInfo().log("Sorted " + this.sortedMethods + " methods");
+        logger.atInfo().log("Sorted " + this.sortedBlocks + " blocks and removed " + this.removedblocks + " blocks");
     }
 
     private void accept(final MethodNode methodNode) {
-
+        final MethodBlock methodBlock = new MethodBlock(methodNode);
+        methodBlock.process();
+        this.sortedBlocks += methodBlock.getSortedBlockCount();
+        this.sortedMethods += 1;
+        this.removedblocks += methodBlock.getRemovedBlockCount();
     }
 
 
