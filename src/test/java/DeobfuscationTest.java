@@ -1,3 +1,4 @@
+import com.google.common.flogger.FluentLogger;
 import io.paratek.rs.analysis.hook.Game;
 import io.paratek.rs.deob.TransformationMediator;
 import io.paratek.rs.deob.impl.ControlFlow;
