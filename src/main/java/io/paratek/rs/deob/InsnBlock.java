@@ -3,6 +3,7 @@ package io.paratek.rs.deob;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
 import jdk.internal.org.objectweb.asm.tree.LabelNode;
+import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,6 +17,8 @@ public class InsnBlock {
     public final List<InsnBlock> parents = new ArrayList<>();
 
     public boolean traversed = false, terminates = false;
+
+    public TryCatchBlockNode catchContainer = null;
 
     /**
      * Remove leading instructions that are unreachable

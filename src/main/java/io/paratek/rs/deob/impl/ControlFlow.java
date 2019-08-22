@@ -24,8 +24,8 @@ public class ControlFlow extends Transformer {
 //                        .filter(methodNode -> methodNode.tryCatchBlocks.size() == 0)
 //                        .forEach(mn -> this.accept((MethodNode) mn)));
 //
-        classMap.get("a").methods.stream()
-                .filter(methodNode -> methodNode.name.equals("u"))
+        classMap.get("al").methods.stream()
+                .filter(methodNode -> methodNode.name.equals("w"))
                 .forEach(this::accept);
 
 //        classMap.values().forEach(classNode -> classNode.methods.forEach(this::accept));

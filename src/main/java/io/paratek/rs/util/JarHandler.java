@@ -7,6 +7,7 @@ import io.paratek.rs.analysis.hook.Game;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
+import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.*;
 import java.net.URL;
@@ -114,8 +115,9 @@ public class JarHandler {
             logger.atInfo().log("Dumping jarfile to " + location);
             JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
             for (ClassNode cn : this.classNodeMap.values()) {
+//                logger.atInfo().log("Writing " + cn.name);
                 ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-//                ClassWriter cw = new ClassWriter(0);
+//                CheckClassAdapter ca = new CheckClassAdapter(cw);
                 cn.accept(cw);
                 out.putNextEntry(new ZipEntry(cn.name + ".class"));
                 out.write(cw.toByteArray());
