@@ -115,8 +115,9 @@ public class JarHandler {
             logger.atInfo().log("Dumping jarfile to " + location);
             JarOutputStream out = new JarOutputStream(new FileOutputStream(location));
             for (ClassNode cn : this.classNodeMap.values()) {
-//                logger.atInfo().log("Writing " + cn.name);
-                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                logger.atInfo().log("Writing " + cn.name);
+                ClassWriter cw = new ClassWriter(0);
+//                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 //                CheckClassAdapter ca = new CheckClassAdapter(cw);
                 cn.accept(cw);
                 out.putNextEntry(new ZipEntry(cn.name + ".class"));

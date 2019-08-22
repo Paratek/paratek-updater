@@ -19,14 +19,14 @@ public class ControlFlow extends Transformer {
     @Override
     public void run(Map<String, ClassNode> classMap) {
 
-//        classMap.values().forEach(classNode ->
-//                classNode.methods.stream()
-//                        .filter(methodNode -> methodNode.tryCatchBlocks.size() == 0)
-//                        .forEach(mn -> this.accept((MethodNode) mn)));
+        classMap.values().forEach(classNode ->
+                classNode.methods.stream()
+                        .filter(methodNode -> methodNode.tryCatchBlocks.size() == 0)
+                        .forEach(mn -> this.accept((MethodNode) mn)));
 //
-        classMap.get("al").methods.stream()
-                .filter(methodNode -> methodNode.name.equals("w"))
-                .forEach(this::accept);
+//        classMap.get("al").methods.stream()
+//                .filter(methodNode -> methodNode.name.equals("w"))
+//                .forEach(this::accept);
 
 //        classMap.values().forEach(classNode -> classNode.methods.forEach(this::accept));
 

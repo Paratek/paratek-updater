@@ -26,7 +26,7 @@ public class MethodBlock {
         this.parseAndChainBlocks();
         this.linkBranchingBlocks();
         this.sortBlocks();
-//        this.postProcess();
+        this.postProcess();
     }
 
 
@@ -137,7 +137,8 @@ public class MethodBlock {
             if (insnNode instanceof JumpInsnNode
                     || (insnNode.getOpcode() >= 172 && insnNode.getOpcode() <= 177)
                     || insnNode.getOpcode() == Opcodes.ATHROW
-                    || insnNode instanceof TableSwitchInsnNode) {
+                    || insnNode instanceof TableSwitchInsnNode
+                    || insnNode instanceof LookupSwitchInsnNode) {
                 final InsnBlock tmp = new InsnBlock();
                 rawBlockList.add(tmp);
                 currentBlock[0] = tmp;
@@ -158,14 +159,12 @@ public class MethodBlock {
                 if (last instanceof JumpInsnNode) {
                     InsnBlock child = this.findLabelOwner(((JumpInsnNode) last).label);
                     if (child != null) {
+                        this.link(block, child);
                         if (last.getOpcode() != Opcodes.GOTO && blockIterator.hasNext()) {
                             final InsnBlock next = blockIterator.next();
-                            block.children.add(next);
-                            next.parents.add(block);
+                            this.link(block, next);
                             blockIterator.previous();
                         }
-                        block.children.add(child);
-                        child.parents.add(block);
                     } else {
                         throw new IllegalStateException("Could not find InsnBlock that owns " + ((JumpInsnNode) last).label);
                     }
@@ -181,14 +180,33 @@ public class MethodBlock {
                     for (LabelNode labelNode : ((TableSwitchInsnNode) last).labels) {
                         final InsnBlock target = this.findLabelOwner(labelNode);
                         if (target != null) {
-                            System.out.println("YEET");
-                            block.children.add(target);
-                            target.parents.add(block);
+                            this.link(block, target);
                         }
+                    }
+                    if (((TableSwitchInsnNode) last).dflt != null) {
+                        final InsnBlock target = this.findLabelOwner(((TableSwitchInsnNode) last).dflt);
+                        this.link(block, target);
+                    }
+                } else if (last instanceof LookupSwitchInsnNode) {
+                    for (LabelNode labelNode : ((LookupSwitchInsnNode) last).labels) {
+                        final InsnBlock target = this.findLabelOwner(labelNode);
+                        if (target != null) {
+                            this.link(block, target);
+                        }
+                    }
+                    if (((LookupSwitchInsnNode) last).dflt != null) {
+                        final InsnBlock target = this.findLabelOwner(((LookupSwitchInsnNode) last).dflt);
+                        this.link(block, target);
                     }
                 }
             }
         }
+    }
+
+
+    private void link(InsnBlock parent, InsnBlock child) {
+        parent.children.add(child);
+        child.parents.add(parent);
     }
 
     /**
